@@ -1,5 +1,4 @@
-all:
-	sequential cuda
+all: sequential cuda
 
 sequential:
 	gcc -o sequential_grep sequential_grep.c

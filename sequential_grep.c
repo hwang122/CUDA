@@ -56,12 +56,12 @@ char *my_memcpy(char *dest, char *src, int count)
     return result;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	char *Filename = argv[1];
 	char *Regexp = argv[2];
     if(Regexp==NULL||Filename==NULL){
-        printf("Usage: #./program [file name] [searching words]");
+        printf("Usage: ./program [file name] [searching words]");
         return -1;
     }
     FILE *f;
