@@ -12,7 +12,7 @@
 #define FILE_LINE 1024000
 #define LINE_WIDTH 256
 
-__device__ char *d_strstr(const char *str1, const char *str2){
+__device__ char *d_strstr(const char *str1, const char *str2, int width){
     char *cp = (char *)str1;
     char *s1, *s2;
 
@@ -20,7 +20,7 @@ __device__ char *d_strstr(const char *str1, const char *str2){
         return ((char*)str1);
 
     int i = 0;
-    while(i < LINE_WIDTH)
+    while(i < width)
     {
         s1 = cp;
         s2 = (char *)str2;
@@ -63,13 +63,13 @@ __global__ void d_Grep(char *d_File, char *d_regex, char *result, int line, int 
     char *pch;
     if(i < line)
     {
-        pch = d_strstr(&d_File[i*width], d_regex);
+        pch = d_strstr(&d_File[i*width], d_regex, width);
         if(pch != NULL)
             d_memcpy(&result[i*width], &d_File[i*width], sizeof(char)*width);
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
     cudaError_t err;
 
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     int i;
 
     file = (char **)malloc(sizeof(char*)*FILE_LINE);
-    result = (char *)malloc(sizeof(char)*FILE_LINE*LINE_WIDTH)
+    result = (char *)malloc(sizeof(char)*FILE_LINE*LINE_WIDTH);
     //keep the continuity of memory
     file[0] = (char *)malloc(sizeof(char)*FILE_LINE*LINE_WIDTH);
     for(i = 1; i < FILE_LINE; i++)
@@ -107,21 +107,21 @@ int main(int argc, char** argv)
     err = cudaMalloc((void**) &d_file, sizeof(char)*FILE_LINE*LINE_WIDTH);
     CHECK_ERR(err);
 
-    err = cudaMalloc((void**) &d_regex, sizeof(Regexp));
+    err = cudaMalloc((void**) &d_regex, strlen(Regexp));
     CHECK_ERR(err);
 
     err = cudaMalloc((void**) &d_result, sizeof(char)*FILE_LINE*LINE_WIDTH);
     CHECK_ERR(err);
 
-    err = cudaMemcpy(d_file, &file[0][0], sizeof(char)FILE_LINE*LINE_WIDTH, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_file, &file[0][0], sizeof(char)*FILE_LINE*LINE_WIDTH, cudaMemcpyHostToDevice);
     CHECK_ERR(err);
 
-    err = cudaMemcpy(d_regex, Regexp, sizeof(Regexp), cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_regex, Regexp,  strlen(Regexp), cudaMemcpyHostToDevice);
     CHECK_ERR(err);
 
     int numThread = 256;
-    int numBlock = FILE_LINE/numThread;
-    d_Grep<<numBlock, numThread>>(d_file, d_regex, d_result, FILE_LINE, LINE_WIDTH);
+    int numBlock = ceil((double)FILE_LINE/numThread);
+    d_Grep<<<numBlock, numThread>>>(d_file, d_regex, d_result, FILE_LINE, LINE_WIDTH);
 
     err = cudaMemcpy(result, d_result, sizeof(char)*FILE_LINE*LINE_WIDTH, cudaMemcpyDeviceToHost);
     CHECK_ERR(err);

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FILE_LINE 300
+#define FILE_LINE 1024000
 #define LINE_WIDTH 256
 
 char *my_strstr(const char *str1, const char *str2)
