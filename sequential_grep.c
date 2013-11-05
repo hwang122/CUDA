@@ -2,18 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FILE_LINE 1024000
-#define LINE_WIDTH 256
+#define FILE_LINE 5120000
+#define LINE_WIDTH 128
 
+//self defined strstr function, to locate the searching word
 char *my_strstr(const char *str1, const char *str2)
 {
     char *cp = (char *)str1;
     char *s1, *s2;
-
+	
+	//if searching word is empty, return the sentence
     if(!*str2)
         return ((char*)str1);
 
     int i = 0;
+	//keep searching until reach the end of sentence
     while(i < LINE_WIDTH)
     {
         s1 = cp;
@@ -31,39 +34,16 @@ char *my_strstr(const char *str1, const char *str2)
     return NULL;
 }
 
-char *my_memcpy(char *dest, char *src, int count)
-{
-    char *result = dest;
-
-    if(dest <= src || dest >= (src + count))
-    {
-        while(count--)
-        {
-            *(char *)dest++ = *(char *)src++;
-        }
-    }
-    else
-    {
-        dest += count - 1;
-        src += count - 1;
-
-        while(count--)
-        {
-            *(char *)dest-- = *(char *)src--;
-        }
-    }
-
-    return result;
-}
-
 int main(int argc, char *argv[])
 {
+	//get arguments from command line
 	char *Filename = argv[1];
 	char *Regexp = argv[2];
     if(Regexp==NULL||Filename==NULL){
         printf("Usage: ./program [file name] [searching words]");
         return -1;
     }
+	//open file
     FILE *f;
     f = fopen(Filename, "r");
     if(f == NULL)
@@ -71,7 +51,8 @@ int main(int argc, char *argv[])
         printf("Fail to open file!\n");
         return -1;
     }
-
+	
+	//store file content
     char **file;
     int i;
 
@@ -81,35 +62,36 @@ int main(int argc, char *argv[])
     for(i = 1; i < FILE_LINE; i++)
         file[i] = file[i-1] + LINE_WIDTH;
 
+	//read file
     for(i = 0; i < FILE_LINE; i++)
     {
         fgets(file[i], LINE_WIDTH, f);
     }
 
-    char *d_file;
-
-    d_file = (char *)malloc(sizeof(char)*FILE_LINE*LINE_WIDTH);
-
-    memcpy(d_file, &file[0][0], sizeof(char) * FILE_LINE * LINE_WIDTH);
-
     int offset = 0;
     char *pch;
     char *result = (char *)malloc(sizeof(char)*FILE_LINE*LINE_WIDTH);
+	//check whether there is searching word in each line
     for(i = 0; i < FILE_LINE; i++)
     {
-        pch = my_strstr(&d_file[i*LINE_WIDTH], Regexp);
+        pch = my_strstr(file[i], Regexp);
         if(pch != NULL)
         {
-            my_memcpy(&result[offset*LINE_WIDTH], &d_file[i*LINE_WIDTH], sizeof(char)*LINE_WIDTH);
+            memcpy(&result[offset*LINE_WIDTH], file[i], sizeof(char)*LINE_WIDTH);
             offset++;
         }
     }
-
+	
+	//print result
     for(i = 0; i < FILE_LINE; i++)
     {
         if(&result[i*LINE_WIDTH]!=NULL)
             printf("%s", &result[i*LINE_WIDTH]);
     }
-
+	
+	//free memory
+	free(file);
+	free(result);
+	
     return 0;
 }
